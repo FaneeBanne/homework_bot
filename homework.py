@@ -1,11 +1,15 @@
-...
+import os
+import requests
+
+from dotenv import load_dotenv
+from telebot import TeleBot, types
 
 load_dotenv()
 
 
-PRACTICUM_TOKEN = ...
-TELEGRAM_TOKEN = ...
-TELEGRAM_CHAT_ID = ...
+PRACTICUM_TOKEN = os.getenv('PRAC_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TG_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TG_CHAT_ID')
 
 RETRY_PERIOD = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
@@ -20,7 +24,7 @@ HOMEWORK_VERDICTS = {
 
 
 def check_tokens():
-    ...
+    
 
 
 def send_message(bot, message):
@@ -47,7 +51,7 @@ def main():
     ...
 
     # Создаем объект класса бота
-    bot = ...
+    bot = TeleBot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
 
     ...
