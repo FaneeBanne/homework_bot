@@ -5,7 +5,7 @@ import sys
 import time
 
 from dotenv import load_dotenv
-from telebot import TeleBot, types
+from telebot import TeleBot
 
 load_dotenv()
 
@@ -33,7 +33,7 @@ logging.basicConfig(
 
 
 def check_tokens():
-    """Проверка критических переменных"""
+    """Проверка критических переменных."""
     values = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     names = ['PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID']
     for value, name in zip(values, names):
@@ -54,7 +54,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Функция получения ответа от API"""
+    """Функция получения ответа от API."""
     payload = {'from_date': timestamp}
     try:
         homework_statuses = requests.get(
@@ -67,14 +67,15 @@ def get_api_answer(timestamp):
             f'Отправляем запрос к API. Параметры: {ENDPOINT, HEADERS, payload}'
         )
         return homework_statuses.json()
-    except Exception as error:
+    except Exception:
         raise Exception(
-            f'Ошибка во время запроса к API {ENDPOINT}. Параметры: {HEADERS, payload}'
+            f'Ошибка во время запроса к API {ENDPOINT}.'
+            f' Параметры: {HEADERS, payload}'
         )
 
 
 def check_response(response):
-    """Проверка на пустоту ответа от API"""
+    """Проверка на пустоту ответа от API."""
     if not isinstance(response, dict):
         raise TypeError(f'Ответ не является словарем')
     homeworks = response.get('homeworks')
@@ -90,7 +91,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Сбор данных с API"""
+    """Сбор данных с API."""
     status = homework.get('status')
     homework_name = homework.get('homework_name')
     if status is None or homework_name is None:
