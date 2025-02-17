@@ -77,16 +77,16 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверка на пустоту ответа от API."""
     if not isinstance(response, dict):
-        raise TypeError(f'Ответ не является словарем')
+        raise TypeError('Ответ не является словарем')
     homeworks = response.get('homeworks')
     current_date = response.get('current_date')
     if homeworks is None or current_date is None:
         logging.debug('Отсутствие изменения статуса.')
-        raise KeyError(f'Не найдены нужные ключи')
+        raise KeyError('Не найдены нужные ключи')
     if not isinstance(homeworks, list):
-        raise TypeError(f'homeworks в ответе API не является списком.')
+        raise TypeError('homeworks в ответе API не является списком.')
     if not isinstance(current_date, int):
-        raise TypeError(f'current_date в ответе API не является int.')
+        raise TypeError('current_date в ответе API не является int.')
     return homeworks
 
 
@@ -95,7 +95,7 @@ def parse_status(homework):
     status = homework.get('status')
     homework_name = homework.get('homework_name')
     if status is None or homework_name is None:
-        raise KeyError(f'Не найдены нужные ключи')
+        raise KeyError('Не найдены нужные ключи')
     if not homework_name:
         raise KeyError('Пустое значение по ключу')
     if status not in HOMEWORK_VERDICTS:
@@ -108,10 +108,8 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-
     check_tokens()
 
-    # Создаем объект класса бота
     bot = TeleBot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
 
