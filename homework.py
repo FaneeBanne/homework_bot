@@ -1,11 +1,17 @@
 import os
-import requests
-import logging
 import sys
 import time
+import logging
+from http import HTTPStatus
 
+import requests
 from dotenv import load_dotenv
 from telebot import TeleBot
+
+from exeptions import (
+    ConectionApiError, ResponseError, TelegramSendMessageError
+)
+
 
 load_dotenv()
 
@@ -35,12 +41,11 @@ logging.basicConfig(
 def check_tokens():
     """Проверка критических переменных."""
     values = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
-    names = ['PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID']
-    for value, name in zip(values, names):
+    flag = True
+    for value in values:
         if not value:
-            logging.critical(
-                f'Отсутствует обязательная переменная окружения: {name}')
-            sys.exit()
+            flag = False
+    return flag
 
 
 def send_message(bot, message):
@@ -48,7 +53,9 @@ def send_message(bot, message):
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
     except Exception as error:
-        raise Exception(f'Сбой отправки сообщения в телеграм {error}.')
+        raise TelegramSendMessageError(
+            f'Сбой отправки сообщения в телеграм {error}.'
+        )
     else:
         logging.debug(f'Сообщения успешно отправлено: {message}.')
 
@@ -60,29 +67,30 @@ def get_api_answer(timestamp):
         homework_statuses = requests.get(
             ENDPOINT, headers=HEADERS, params=payload
         )
-        if homework_statuses.status_code != 200:
-            raise ValueError(f'API вернул код {homework_statuses.status_code}')
-        homework_statuses.raise_for_status()
-        logging.info(
-            f'Отправляем запрос к API. Параметры: {ENDPOINT, HEADERS, payload}'
-        )
-        return homework_statuses.json()
+
     except Exception:
-        raise Exception(
+        raise ConectionApiError(
             f'Ошибка во время запроса к API {ENDPOINT}.'
             f' Параметры: {HEADERS, payload}'
         )
+    if homework_statuses.status_code != HTTPStatus.OK:
+        raise ResponseError(f'API вернул код {homework_statuses.status_code}')
+    homework_statuses.raise_for_status()
+    logging.info(
+        f'Отправляем запрос к API. Параметры: {ENDPOINT, HEADERS, payload}'
+    )
+    return homework_statuses.json()
 
 
 def check_response(response):
     """Проверка на пустоту ответа от API."""
     if not isinstance(response, dict):
         raise TypeError('Ответ не является словарем')
+    if 'homeworks' not in response or 'current_date' not in response:
+        raise KeyError('Не найдены нужные ключи')
     homeworks = response.get('homeworks')
     current_date = response.get('current_date')
-    if homeworks is None or current_date is None:
-        logging.debug('Отсутствие изменения статуса.')
-        raise KeyError('Не найдены нужные ключи')
+
     if not isinstance(homeworks, list):
         raise TypeError('homeworks в ответе API не является списком.')
     if not isinstance(current_date, int):
@@ -92,10 +100,10 @@ def check_response(response):
 
 def parse_status(homework):
     """Сбор данных с API."""
+    if 'status' not in homework or 'homework_name' not in homework:
+        raise KeyError('Не найдены нужные ключи')
     status = homework.get('status')
     homework_name = homework.get('homework_name')
-    if status is None or homework_name is None:
-        raise KeyError('Не найдены нужные ключи')
     if not homework_name:
         raise KeyError('Пустое значение по ключу')
     if status not in HOMEWORK_VERDICTS:
@@ -108,7 +116,10 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-    check_tokens()
+    if not check_tokens():
+        logging.critical(
+            'Отсутствует обязательная переменная окружения.')
+        sys.exit()
 
     bot = TeleBot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
