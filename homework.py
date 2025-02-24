@@ -43,15 +43,17 @@ logging.basicConfig(
 def check_tokens():
     """Проверка критических переменных."""
     values = {
-        'PRACTICUM_TOKEN':PRACTICUM_TOKEN,
-        'TELEGRAM_TOKEN':TELEGRAM_TOKEN,
-        'TELEGRAM_CHAT_ID':TELEGRAM_CHAT_ID
+        'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
+        'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
+        'TELEGRAM_CHAT_ID': TELEGRAM_CHAT_ID
     }
     flag = True
-    for key, value in values:
+    for key, value in values.items():
         if not value:
             flag = False
-            logging.critical(f'Пропущен токен: {key}')
+            logging.critical(
+                f'Отсутствует обязательная переменная окружения: {key}'
+            )
     return flag
 
 
@@ -111,7 +113,7 @@ def check_response(response):
 
 def parse_status(homework):
     """Сбор данных с API."""
-    if 'status' not in homework: 
+    if 'status' not in homework:
         raise KeyError('Не найден ключ status')
     if 'homework_name' not in homework:
         raise KeyError('Не найден ключ homework_name')
@@ -130,8 +132,6 @@ def parse_status(homework):
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
-        logging.critical(
-            'Отсутствует обязательная переменная окружения.')
         sys.exit()
 
     bot = TeleBot(token=TELEGRAM_TOKEN)
