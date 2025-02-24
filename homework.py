@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 from telebot import TeleBot
 
 from exeptions import (
-    ConectionApiError, ResponseError, TelegramSendMessageError
+    ConectionApiError, ResponseError,
+    TelegramSendMessageError,
+    EmptyHomework
 )
 
 
@@ -40,11 +42,16 @@ logging.basicConfig(
 
 def check_tokens():
     """Проверка критических переменных."""
-    values = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
+    values = {
+        'PRACTICUM_TOKEN':PRACTICUM_TOKEN,
+        'TELEGRAM_TOKEN':TELEGRAM_TOKEN,
+        'TELEGRAM_CHAT_ID':TELEGRAM_CHAT_ID
+    }
     flag = True
-    for value in values:
+    for key, value in values:
         if not value:
             flag = False
+            logging.critical(f'Пропущен токен: {key}')
     return flag
 
 
@@ -86,24 +93,30 @@ def check_response(response):
     """Проверка на пустоту ответа от API."""
     if not isinstance(response, dict):
         raise TypeError('Ответ не является словарем')
-    if 'homeworks' not in response or 'current_date' not in response:
-        raise KeyError('Не найдены нужные ключи')
-    homeworks = response.get('homeworks')
-    current_date = response.get('current_date')
+    if 'homeworks' not in response:
+        raise KeyError('Не найдеy ключ homeworks')
+    if 'current_date' not in response:
+        raise KeyError('Не найден ключ current_date')
+    homeworks = response['homeworks']
+    current_date = response['current_date']
 
     if not isinstance(homeworks, list):
         raise TypeError('homeworks в ответе API не является списком.')
     if not isinstance(current_date, int):
         raise TypeError('current_date в ответе API не является int.')
+    if not homeworks:
+        raise EmptyHomework('Пустая домашняя работа')
     return homeworks
 
 
 def parse_status(homework):
     """Сбор данных с API."""
-    if 'status' not in homework or 'homework_name' not in homework:
-        raise KeyError('Не найдены нужные ключи')
-    status = homework.get('status')
-    homework_name = homework.get('homework_name')
+    if 'status' not in homework: 
+        raise KeyError('Не найден ключ status')
+    if 'homework_name' not in homework:
+        raise KeyError('Не найден ключ homework_name')
+    status = homework['status']
+    homework_name = homework['homework_name']
     if not homework_name:
         raise KeyError('Пустое значение по ключу')
     if status not in HOMEWORK_VERDICTS:

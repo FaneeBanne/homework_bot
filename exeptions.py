@@ -6,3 +6,6 @@ class ResponseError(Exception):
 
 class TelegramSendMessageError(Exception):
     """Ошибка отправки сообщения в телеграм"""
+
+class EmptyHomework(Exception):
+    """Список homework пустой"""
